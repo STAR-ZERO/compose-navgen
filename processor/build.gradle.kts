@@ -21,6 +21,10 @@ dependencies {
     implementation(project(":library"))
     implementation("com.google.devtools.ksp:symbol-processing-api:1.5.30-1.0.0")
     implementation("com.squareup:kotlinpoet-ksp:1.10.1")
+
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("com.google.truth:truth:1.1.3")
+    testImplementation("com.github.tschuchortdev:kotlin-compile-testing-ksp:1.4.5")
 }
 
 group = project.extra["groupId"] as String

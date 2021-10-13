@@ -10,7 +10,6 @@ Generate helper methods for [compose navigation](https://developer.android.com/j
 - Support default value and nullable.
 - Support argument types.
 - Support animation navigation.
-- Add unit test.
 - Add Github Actions.
 
 ## Usage
