@@ -64,18 +64,7 @@ class NavGenProcessorTest {
         val generatedSource = generatedFiles.first().readText()
         assertThat(generatedSource).contains(
             """
-                public fun NavGraphBuilder.$navGenName(): Unit {
-                  composable("$navGenName") {
-                    $methodName()
-                  }
-                }
-                
-                public fun NavController.$navGenName(): Unit {
-                  navigate("$navGenName")
-                }
-
-                public val NavGenRoutes.$navGenName: String
-                  get() = "$navGenName"
+                test fail
             """.trimIndent()
         )
     }
