@@ -276,8 +276,10 @@ class NavGenProcessor(
                         route = "$route/$args"
                     }
                     if (navGenInfo.optionalArgument.isNotEmpty()) {
-                        val args =
-                            navGenInfo.optionalArgument.joinToString(separator = "&") { "${it.name}=$" + it.name }
+                        // e.g. name=${name ?: ""}
+                        val args = navGenInfo.optionalArgument.joinToString(separator = "&") {
+                            "${it.name}=" + "$" + "{${it.name} ?: \"\"}"
+                        }
                         route = "$route?$args"
                     }
                     addStatement("navigate(%P)", route)

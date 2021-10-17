@@ -173,7 +173,7 @@ class NavGenProcessorTest {
                 }
                 
                 public fun NavController.$navGenName(`$argName`: String? = null): Unit {
-                  navigate(${"\"\"\""}$navGenName?$argName=${"$"}$argName${"\"\"\""})
+                  navigate(${"\"\"\""}$navGenName?$argName=${"$"}{$argName ?: ""}${"\"\"\""})
                 }
 
                 public val NavGenRoutes.$navGenName: String
@@ -337,7 +337,7 @@ class NavGenProcessorTest {
                   $argName2: String,
                   $argName3: String? = null
                 ): Unit {
-                  navigate(${"\"\"\""}$navGenName/${"$"}$argName1/${"$"}$argName2?$argName3=${"$"}$argName3${"\"\"\""})
+                  navigate(${"\"\"\""}$navGenName/${"$"}$argName1/${"$"}$argName2?$argName3=${"$"}{$argName3 ?: ""}${"\"\"\""})
                 }
                 
                 public val NavGenRoutes.$navGenName: String
