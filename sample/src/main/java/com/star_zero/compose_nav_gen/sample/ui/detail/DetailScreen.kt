@@ -25,14 +25,14 @@ import com.star_zero.compose_nav_gen.NavGen
 
 @NavGen("detail")
 @Composable
-fun DetailScreen(data: String, navController: NavController) {
+fun DetailScreen(lang: String, ja: String?, navController: NavController) {
     Column {
         Button(onClick = { navController.popBackStack() }) {
             Text(text = "Back")
         }
 
         Text(
-            text = data,
+            text = "$lang ($ja)",
             style = MaterialTheme.typography.h3
         )
     }

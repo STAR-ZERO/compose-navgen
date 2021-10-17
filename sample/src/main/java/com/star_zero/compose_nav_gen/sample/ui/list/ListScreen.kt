@@ -35,13 +35,13 @@ import com.star_zero.compose_nav_gen.sample.ui.detail.detail
 fun ListScreen(navController: NavController) {
 
     val dataList = listOf(
-        "Kotlin",
-        "Java",
-        "Swift",
-        "Dart",
-        "Go",
-        "Rust",
-        "JavaScript"
+        "Kotlin" to "ことりん",
+        "Java" to "じゃゔぁ",
+        "Swift" to "すいふと",
+        "Dart" to "だーと",
+        "Go" to "ごー",
+        "Rust" to "らすと",
+        "JavaScript" to "じゃゔぁすくりぷと"
     )
 
     LazyColumn {
@@ -50,11 +50,14 @@ fun ListScreen(navController: NavController) {
                 modifier = Modifier
                     .fillMaxSize()
                     .clickable {
-                        navController.detail(data)
+                        navController.detail(
+                            lang = data.first,
+                            ja = data.second
+                        )
                     }
                     .padding(16.dp)
             ) {
-                Text(text = data)
+                Text(text = data.first)
             }
             Divider()
         }

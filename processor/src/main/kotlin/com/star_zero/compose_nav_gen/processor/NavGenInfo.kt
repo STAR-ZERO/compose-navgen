@@ -25,14 +25,29 @@ data class NavGenInfo(
     val arguments: List<Argument>
 ) {
 
-    val navArguments: List<Argument.NavArgument> = arguments.filterIsInstance<Argument.NavArgument>()
+    val navArguments: List<Argument.NavArgument> =
+        arguments.filterIsInstance<Argument.NavArgument>()
     val navControllerArgs = arguments.filterIsInstance<Argument.NavController>()
+
+    val requiredArgument = navArguments.filter { !it.nullable }
+    val optionalArgument = navArguments.filter { it.nullable }
 
     val route: String = if (navArguments.isEmpty()) {
         navGenName
     } else {
-        // e.g. route/{id}/{name}
-        "$navGenName/${navArguments.joinToString(separator = "/") { "{${it.name}}" }}"
+
+        var route = navGenName
+        if (requiredArgument.isNotEmpty()) {
+            // e.g. {id}/{name}
+            val args = requiredArgument.joinToString(separator = "/") { "{${it.name}}" }
+            route = "$route/$args"
+        }
+        if (optionalArgument.isNotEmpty()) {
+            // e.g. id={id}&name={name}
+            val args = optionalArgument.joinToString(separator = "&") { "${it.name}={${it.name}}" }
+            route = "$route?$args"
+        }
+        route
     }
 
     sealed class Argument {
@@ -42,7 +57,8 @@ data class NavGenInfo(
         data class NavArgument(
             override val name: String,
             val type: KSType,
-            val navType: NavType
+            val navType: NavType,
+            val nullable: Boolean,
         ) : Argument()
     }
 

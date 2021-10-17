@@ -83,18 +83,27 @@ class NavGenProcessor(
         val navGenName = navGenAnnotation.getMember<String>("name")
         val arguments = function.parameters.map { parameter ->
             val name = parameter.name!!.asString()
-            when (val type = parameter.type.resolve()) {
+            val type = parameter.type.resolve()
+            when (type.makeNotNullable()) { // Judgment by nonnull type
                 types.navController -> NavGenInfo.Argument.NavController(parameter.name!!.asString())
                 types.string -> NavGenInfo.Argument.NavArgument(
                     name,
                     type,
-                    NavGenInfo.NavType.STRING
+                    NavGenInfo.NavType.STRING,
+                    type.isMarkedNullable
                 )
-                types.int -> NavGenInfo.Argument.NavArgument(
-                    name,
-                    type,
-                    NavGenInfo.NavType.INT
-                )
+                types.int -> {
+                    val nullable = type.isMarkedNullable
+                    if (nullable) {
+                        error("Int argument does not allow nullable")
+                    }
+                    NavGenInfo.Argument.NavArgument(
+                        name,
+                        type,
+                        NavGenInfo.NavType.INT,
+                        false
+                    )
+                }
                 else -> error("Not supported argument type")
             }
         }
@@ -132,7 +141,7 @@ class NavGenProcessor(
                 }
                 if (navGenInfo.arguments.isEmpty()) {
                     /**
-                     * // e.g.
+                     * e.g.
                      *
                      * composable("sample") {
                      *   SampleScreen()
@@ -150,17 +159,17 @@ class NavGenProcessor(
                     )
                 } else {
                     /**
-                     * // e.g.
+                     * e.g.
                      *
-                     * composable("sample/{id}/{name}",
+                     * composable("sample/{id}?name={name}",
                      *   arguments = listOf(
                      *     navArgument("id") { type = NavType.IntType },
-                     *     navArgument("name") { type = NavType.StringType },
+                     *     navArgument("name") { type = NavType.StringType; nullability = true },
                      *   )
                      * ) { backStackEntry ->
                      *   SampleScreen(
                      *     backStackEntry.arguments!!.getInt("id"),
-                     *     backStackEntry.arguments!!.getString("name")!!,
+                     *     backStackEntry.arguments?.getString("name"),
                      *   )
                      * }
                      */
@@ -168,8 +177,13 @@ class NavGenProcessor(
                         addStatement("%M(%S,", composableName, navGenInfo.route)
                         addStatement("  arguments = listOf(")
                         navGenInfo.navArguments.forEach { arg ->
+                            val nullable = if (arg.nullable) {
+                                "; nullable = true"
+                            } else {
+                                ""
+                            }
                             addStatement(
-                                "    %M(%S) { type = %M.${arg.navType.value} },",
+                                "    %M(%S) { type = %M.${arg.navType.value}$nullable },",
                                 navArgumentName,
                                 arg.name,
                                 navTypeName
@@ -189,10 +203,17 @@ class NavGenProcessor(
                             is NavGenInfo.Argument.NavArgument -> {
                                 when (arg.navType) {
                                     NavGenInfo.NavType.STRING -> {
-                                        addStatement(
-                                            "    backStackEntry.arguments!!.getString(%S)!!,",
-                                            arg.name
-                                        )
+                                        if (arg.nullable) {
+                                            addStatement(
+                                                "    backStackEntry.arguments?.getString(%S),",
+                                                arg.name
+                                            )
+                                        } else {
+                                            addStatement(
+                                                "    backStackEntry.arguments!!.getString(%S)!!,",
+                                                arg.name
+                                            )
+                                        }
                                     }
                                     NavGenInfo.NavType.INT -> {
                                         addStatement(
@@ -219,19 +240,47 @@ class NavGenProcessor(
             .receiver(types.navController.toTypeName())
             .apply {
                 if (navGenInfo.navArguments.isEmpty()) {
+                    /**
+                     * e.g.
+                     *
+                     * fun NavController.sample() {
+                     *   navigate("sample")
+                     * }
+                     */
                     addStatement("navigate(%S)", navGenInfo.route)
                 } else {
+                    /**
+                     * e.g.
+                     *
+                     * fun NavController.sample(id: Int, name: String? = null) {
+                     *   navigate("sample/$id?name=$name")
+                     * }
+                     */
                     navGenInfo.navArguments.forEach { arg ->
                         addParameter(
                             ParameterSpec.builder(
                                 arg.name,
                                 arg.type.toTypeName()
-                            ).build()
+                            ).apply {
+                                if (arg.nullable) {
+                                    defaultValue("null")
+                                }
+                            }.build()
                         )
                     }
-                    // e.g. navigate("routes/${id}/${name}")
-                    val path = navGenInfo.navArguments.joinToString(separator = "/") { "$" + it.name }
-                    addStatement("navigate(%P)", "${navGenInfo.navGenName}/$path")
+                    // e.g. navigate("routes/${id}?name=${name}")
+                    var route = navGenInfo.navGenName
+                    if (navGenInfo.requiredArgument.isNotEmpty()) {
+                        val args =
+                            navGenInfo.requiredArgument.joinToString(separator = "/") { "$" + it.name }
+                        route = "$route/$args"
+                    }
+                    if (navGenInfo.optionalArgument.isNotEmpty()) {
+                        val args =
+                            navGenInfo.optionalArgument.joinToString(separator = "&") { "${it.name}=$" + it.name }
+                        route = "$route?$args"
+                    }
+                    addStatement("navigate(%P)", route)
                 }
             }
             .build()
