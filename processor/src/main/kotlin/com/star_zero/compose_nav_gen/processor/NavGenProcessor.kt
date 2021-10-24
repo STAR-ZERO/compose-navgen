@@ -86,22 +86,32 @@ class NavGenProcessor(
             val type = parameter.type.resolve()
             when (type.makeNotNullable()) { // Judgment by nonnull type
                 types.navController -> NavGenInfo.Argument.NavController(parameter.name!!.asString())
-                types.string -> NavGenInfo.Argument.NavArgument(
-                    name,
-                    type,
-                    NavGenInfo.NavType.STRING,
-                    type.isMarkedNullable
-                )
+                types.string -> {
+                    val defaultAnnotation = parameter.annotations.find { it.annotationType.resolve() == types.defaultStringAnnotation }
+                    val defaultValue = defaultAnnotation?.getMember<String>("defaultValue")
+
+                    NavGenInfo.Argument.NavArgument(
+                        name,
+                        type,
+                        NavGenInfo.NavType.STRING,
+                        type.isMarkedNullable,
+                        defaultValue
+                    )
+                }
                 types.int -> {
                     val nullable = type.isMarkedNullable
                     if (nullable) {
                         error("Int argument does not allow nullable")
                     }
+                    val defaultAnnotation = parameter.annotations.find { it.annotationType.resolve() == types.defaultIntAnnotation }
+                    val defaultValue = defaultAnnotation?.getMember<Int>("defaultValue")
+
                     NavGenInfo.Argument.NavArgument(
                         name,
                         type,
                         NavGenInfo.NavType.INT,
-                        false
+                        false,
+                        defaultValue
                     )
                 }
                 else -> error("Not supported argument type")
@@ -182,8 +192,17 @@ class NavGenProcessor(
                             } else {
                                 ""
                             }
+                            val defaultValue = if (arg.defaultValue != null) {
+                                if (arg.navType == NavGenInfo.NavType.STRING) {
+                                    "; defaultValue = \"${arg.defaultValue}\""
+                                } else {
+                                    "; defaultValue = ${arg.defaultValue}"
+                                }
+                            } else {
+                                ""
+                            }
                             addStatement(
-                                "    %M(%S) { type = %M.${arg.navType.value}$nullable },",
+                                "    %M(%S) { type = %M.${arg.navType.value}$nullable$defaultValue },",
                                 navArgumentName,
                                 arg.name,
                                 navTypeName
@@ -264,6 +283,13 @@ class NavGenProcessor(
                             ).apply {
                                 if (arg.nullable) {
                                     defaultValue("null")
+                                } else if (arg.defaultValue != null) {
+                                    // default value
+                                    if (arg.navType == NavGenInfo.NavType.STRING) {
+                                        defaultValue("\"${arg.defaultValue}\"")
+                                    } else {
+                                        defaultValue("${arg.defaultValue}")
+                                    }
                                 }
                             }.build()
                         )
@@ -276,9 +302,16 @@ class NavGenProcessor(
                         route = "$route/$args"
                     }
                     if (navGenInfo.optionalArgument.isNotEmpty()) {
-                        // e.g. name=${name ?: ""}
                         val args = navGenInfo.optionalArgument.joinToString(separator = "&") {
-                            "${it.name}=" + "$" + "{${it.name} ?: \"\"}"
+                            if (it.nullable) {
+                                // nullable
+                                // e.g. name=${name ?: ""}
+                                "${it.name}=" + "$" + "{${it.name} ?: \"\"}"
+                            } else {
+                                // default value
+                                // e.g. name=$name
+                                "${it.name}=" + "$" + it.name
+                            }
                         }
                         route = "$route?$args"
                     }

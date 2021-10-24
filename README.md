@@ -7,9 +7,9 @@ Generate helper methods for [compose navigation](https://developer.android.com/j
 
 ## TODO
 
-- Support default value and nullable.
 - Support argument types.
 - Support animation navigation.
+- Refactor continuously
 
 ## Usage
 
@@ -77,6 +77,43 @@ NavHost(navController = navController, startDestination = NavGenRoutes.list) {
 navController.detail(data) // Call NavController.navigate("detail/$data")
 ```
 
+### Optional arguments
+
+If you want to use optional arguments, you can use nullable or a default value.
+
+```kt
+@NavGen("sample")
+@Composable
+fun SampleScreen(
+    data1: String?,
+    @DefaultString("default") data2: String
+) {
+    // ...
+}
+```
+
+<details>
+<summary>Generated code</summary>
+
+```kt
+composable("sample?data1={data1}&data2={data2}",
+  arguments = listOf(
+    navArgument("data1") { type = NavType.StringType; nullable = true },
+    navArgument("data2") { type = NavType.StringType; defaultValue = "default" },
+)
+) { backStackEntry ->
+    // ...
+}
+```
+
+</details>
+
+If you nullable or a optional value, no need pass a arguemnt.
+
+```kt
+navController.sample()
+```
+
 ### Set srcDirs
 
 Android Studio does not automatically index generated codes by KSP. You have to add sourceSets manually.
@@ -128,7 +165,7 @@ dependencies {
 
 ## License
 
-```
+```/
 Copyright 2021 Kenji Abe
 
 Licensed under the Apache License, Version 2.0 (the "License");

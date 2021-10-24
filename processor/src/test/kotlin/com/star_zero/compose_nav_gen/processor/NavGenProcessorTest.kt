@@ -183,6 +183,58 @@ class NavGenProcessorTest {
     }
 
     @Test
+    fun hasStringDefaultArgument() {
+        val navGenName = "test"
+        val methodName = "Test"
+        val argName = "data"
+
+        val source = SourceFile.kotlin(
+            "Test.kt",
+            """
+                package test
+                import com.star_zero.compose_nav_gen.NavGen
+                import com.star_zero.compose_nav_gen.DefaultString
+
+                @NavGen("$navGenName")
+                fun $methodName(@DefaultString("abc") $argName: String) {
+                }
+            """.trimIndent()
+        )
+        val compilation = prepareCompilation(source)
+        val result = compilation.compile()
+
+        assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+
+        val generatedFiles =
+            compilation.kspSourcesDir.walkTopDown().filter { it.extension == "kt" }.toList()
+        assertThat(generatedFiles).hasSize(1)
+
+        val generatedSource = generatedFiles.first().readText()
+        assertThat(generatedSource).contains(
+            """
+                public fun NavGraphBuilder.$navGenName(): Unit {
+                  composable("$navGenName?$argName={$argName}",
+                    arguments = listOf(
+                      navArgument("$argName") { type = NavType.StringType; defaultValue = "abc" },
+                    )
+                  ) { backStackEntry ->
+                    $methodName(
+                      backStackEntry.arguments!!.getString("$argName")!!,
+                    )
+                  }
+                }
+                
+                public fun NavController.$navGenName(`$argName`: String = "abc"): Unit {
+                  navigate(${"\"\"\""}$navGenName?$argName=${"$"}$argName${"\"\"\""})
+                }
+
+                public val NavGenRoutes.$navGenName: String
+                  get() = "$navGenName?$argName={$argName}"
+            """.trimIndent()
+        )
+    }
+
+    @Test
     fun hasIntArgument() {
         val navGenName = "test"
         val methodName = "Test"
@@ -229,6 +281,58 @@ class NavGenProcessorTest {
 
                 public val NavGenRoutes.$navGenName: String
                   get() = "$navGenName/{$argName}"
+            """.trimIndent()
+        )
+    }
+
+    @Test
+    fun hasIntDefaultArgument() {
+        val navGenName = "test"
+        val methodName = "Test"
+        val argName = "data"
+
+        val source = SourceFile.kotlin(
+            "Test.kt",
+            """
+                package test
+                import com.star_zero.compose_nav_gen.NavGen
+                import com.star_zero.compose_nav_gen.DefaultInt
+
+                @NavGen("$navGenName")
+                fun $methodName(@DefaultInt(123) $argName: Int) {
+                }
+            """.trimIndent()
+        )
+        val compilation = prepareCompilation(source)
+        val result = compilation.compile()
+
+        assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+
+        val generatedFiles =
+            compilation.kspSourcesDir.walkTopDown().filter { it.extension == "kt" }.toList()
+        assertThat(generatedFiles).hasSize(1)
+
+        val generatedSource = generatedFiles.first().readText()
+        assertThat(generatedSource).contains(
+            """
+                public fun NavGraphBuilder.$navGenName(): Unit {
+                  composable("$navGenName?$argName={$argName}",
+                    arguments = listOf(
+                      navArgument("$argName") { type = NavType.IntType; defaultValue = 123 },
+                    )
+                  ) { backStackEntry ->
+                    $methodName(
+                      backStackEntry.arguments!!.getInt("$argName"),
+                    )
+                  }
+                }
+                
+                public fun NavController.$navGenName(`$argName`: Int = 123): Unit {
+                  navigate(${"\"\"\""}$navGenName?$argName=${"$"}$argName${"\"\"\""})
+                }
+
+                public val NavGenRoutes.$navGenName: String
+                  get() = "$navGenName?$argName={$argName}"
             """.trimIndent()
         )
     }
@@ -288,7 +392,9 @@ class NavGenProcessorTest {
         val argName1 = "data1"
         val argName2 = "data2"
         val argName3 = "data3"
-        val argName4 = "navController"
+        val argName4 = "data4"
+        val argName5 = "data5"
+        val argName6 = "navController"
 
         val source = SourceFile.kotlin(
             "Test.kt",
@@ -296,9 +402,17 @@ class NavGenProcessorTest {
                 package test
                 import androidx.navigation.NavController
                 import com.star_zero.compose_nav_gen.NavGen
+                import com.star_zero.compose_nav_gen.DefaultString
+                import com.star_zero.compose_nav_gen.DefaultInt
 
                 @NavGen("$navGenName")
-                fun $methodName($argName1: Int, $argName2: String, $argName3: String?, $argName4: NavController) {
+                fun $methodName(
+                    $argName1: Int,
+                    $argName2: String,
+                    $argName3: String?,
+                    @DefaultString("abc") $argName4: String,
+                    @DefaultInt(123) $argName5: Int,
+                    $argName6: NavController) {
                 }
             """.trimIndent()
         )
@@ -315,19 +429,23 @@ class NavGenProcessorTest {
 
         assertThat(generatedSource).contains(
             """
-                public fun NavGraphBuilder.$navGenName($argName4: NavController): Unit {
-                  composable("$navGenName/{$argName1}/{$argName2}?$argName3={$argName3}",
+                public fun NavGraphBuilder.$navGenName($argName6: NavController): Unit {
+                  composable("$navGenName/{$argName1}/{$argName2}?$argName3={$argName3}&$argName4={$argName4}&$argName5={$argName5}",
                     arguments = listOf(
                       navArgument("$argName1") { type = NavType.IntType },
                       navArgument("$argName2") { type = NavType.StringType },
                       navArgument("$argName3") { type = NavType.StringType; nullable = true },
+                      navArgument("$argName4") { type = NavType.StringType; defaultValue = "abc" },
+                      navArgument("$argName5") { type = NavType.IntType; defaultValue = 123 },
                     )
                   ) { backStackEntry ->
                     $methodName(
                       backStackEntry.arguments!!.getInt("$argName1"),
                       backStackEntry.arguments!!.getString("$argName2")!!,
                       backStackEntry.arguments?.getString("$argName3"),
-                      $argName4,
+                      backStackEntry.arguments!!.getString("$argName4")!!,
+                      backStackEntry.arguments!!.getInt("$argName5"),
+                      $argName6,
                     )
                   }
                 }
@@ -335,13 +453,15 @@ class NavGenProcessorTest {
                 public fun NavController.$navGenName(
                   $argName1: Int,
                   $argName2: String,
-                  $argName3: String? = null
+                  $argName3: String? = null,
+                  $argName4: String = "abc",
+                  $argName5: Int = 123
                 ): Unit {
-                  navigate(${"\"\"\""}$navGenName/${"$"}$argName1/${"$"}$argName2?$argName3=${"$"}{$argName3 ?: ""}${"\"\"\""})
+                  navigate(${"\"\"\""}$navGenName/${"$"}$argName1/${"$"}$argName2?$argName3=${"$"}{$argName3 ?: ""}&$argName4=${"$"}$argName4&$argName5=${"$"}$argName5${"\"\"\""})
                 }
                 
                 public val NavGenRoutes.$navGenName: String
-                  get() = "$navGenName/{$argName1}/{$argName2}?$argName3={$argName3}"
+                  get() = "$navGenName/{$argName1}/{$argName2}?$argName3={$argName3}&$argName4={$argName4}&$argName5={$argName5}"
             """.trimIndent()
         )
     }

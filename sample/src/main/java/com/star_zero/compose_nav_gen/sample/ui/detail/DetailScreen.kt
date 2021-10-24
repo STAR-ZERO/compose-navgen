@@ -21,11 +21,17 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
+import com.star_zero.compose_nav_gen.DefaultString
 import com.star_zero.compose_nav_gen.NavGen
 
 @NavGen("detail")
 @Composable
-fun DetailScreen(lang: String, ja: String?, navController: NavController) {
+fun DetailScreen(
+    lang: String,
+    ja: String?,
+    @DefaultString("yes") defaultTest: String,
+    navController: NavController
+) {
     Column {
         Button(onClick = { navController.popBackStack() }) {
             Text(text = "Back")
@@ -34,6 +40,11 @@ fun DetailScreen(lang: String, ja: String?, navController: NavController) {
         Text(
             text = "$lang ($ja)",
             style = MaterialTheme.typography.h3
+        )
+
+        Text(
+            text = "Use default? => $defaultTest",
+            style = MaterialTheme.typography.body1
         )
     }
 }

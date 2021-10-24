@@ -29,8 +29,8 @@ data class NavGenInfo(
         arguments.filterIsInstance<Argument.NavArgument>()
     val navControllerArgs = arguments.filterIsInstance<Argument.NavController>()
 
-    val requiredArgument = navArguments.filter { !it.nullable }
-    val optionalArgument = navArguments.filter { it.nullable }
+    val requiredArgument = navArguments.filter { it.isRequired }
+    val optionalArgument = navArguments.filter { !it.isRequired }
 
     val route: String = if (navArguments.isEmpty()) {
         navGenName
@@ -59,7 +59,10 @@ data class NavGenInfo(
             val type: KSType,
             val navType: NavType,
             val nullable: Boolean,
-        ) : Argument()
+            val defaultValue: Any?,
+        ) : Argument() {
+            val isRequired = !nullable && defaultValue == null
+        }
     }
 
     enum class NavType(val value: String) {

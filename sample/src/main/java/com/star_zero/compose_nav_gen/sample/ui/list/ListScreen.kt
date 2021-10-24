@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.star_zero.compose_nav_gen.NavGen
 import com.star_zero.compose_nav_gen.sample.ui.detail.detail
+import kotlin.random.Random
 
 @NavGen("list")
 @Composable
@@ -50,10 +51,18 @@ fun ListScreen(navController: NavController) {
                 modifier = Modifier
                     .fillMaxSize()
                     .clickable {
-                        navController.detail(
-                            lang = data.first,
-                            ja = data.second
-                        )
+                        if (Random.nextBoolean()) {
+                            navController.detail(
+                                lang = data.first,
+                                ja = data.second,
+                            )
+                        } else {
+                            navController.detail(
+                                lang = data.first,
+                                ja = data.second,
+                                defaultTest = "no"
+                            )
+                        }
                     }
                     .padding(16.dp)
             ) {
