@@ -158,8 +158,8 @@ plugins {
 dependencies {
     implementation("androidx.navigation:navigation-compose:2.4.0-alpha10")
 
-    implementation("com.star-zero:compose-navgen:1.0.0-alpha01")
-    ksp("com.star-zero:compose-navgen-processor:1.0.0-alpha01")
+    implementation("com.star-zero:compose-navgen:1.0.0-alpha02")
+    ksp("com.star-zero:compose-navgen-processor:1.0.0-alpha02")
 }
 ```
 
