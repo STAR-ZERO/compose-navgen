@@ -108,7 +108,7 @@ composable("sample?data1={data1}&data2={data2}",
 
 </details>
 
-If you nullable or a optional value, no need pass a arguemnt.
+If you use nullable or a optional value, no need pass a arguemnt.
 
 ```kt
 navController.sample()
@@ -165,7 +165,7 @@ dependencies {
 
 ## License
 
-```/
+```
 Copyright 2021 Kenji Abe
 
 Licensed under the Apache License, Version 2.0 (the "License");
