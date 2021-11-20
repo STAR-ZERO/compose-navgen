@@ -55,12 +55,13 @@ fun ListScreen(navController: NavController) {
                             navController.detail(
                                 lang = data.first,
                                 ja = data.second,
+                                like = Random.nextBoolean()
                             )
                         } else {
                             navController.detail(
                                 lang = data.first,
                                 ja = data.second,
-                                defaultTest = "no"
+                                like = Random.nextBoolean()
                             )
                         }
                     }

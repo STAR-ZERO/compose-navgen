@@ -67,6 +67,7 @@ data class NavGenInfo(
 
     enum class NavType(val value: String) {
         STRING("StringType"),
-        INT("IntType")
+        INT("IntType"),
+        BOOL("BoolType")
     }
 }

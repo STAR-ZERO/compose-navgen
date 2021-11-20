@@ -114,6 +114,23 @@ class NavGenProcessor(
                         defaultValue
                     )
                 }
+                types.bool -> {
+                    val nullable = type.isMarkedNullable
+                    if (nullable) {
+                        error("Boolean argument does not allow nullable")
+                    }
+
+                    val defaultAnnotation = parameter.annotations.find { it.annotationType.resolve() == types.defaultBoolAnnotation }
+                    val defaultValue = defaultAnnotation?.getMember<Boolean>("defaultValue")
+
+                    NavGenInfo.Argument.NavArgument(
+                        name,
+                        type,
+                        NavGenInfo.NavType.BOOL,
+                        false,
+                        defaultValue,
+                    )
+                }
                 else -> error("Not supported argument type")
             }
         }
@@ -237,6 +254,12 @@ class NavGenProcessor(
                                     NavGenInfo.NavType.INT -> {
                                         addStatement(
                                             "    backStackEntry.arguments!!.getInt(%S),",
+                                            arg.name
+                                        )
+                                    }
+                                    NavGenInfo.NavType.BOOL -> {
+                                        addStatement(
+                                            "    backStackEntry.arguments!!.getBoolean(%S),",
                                             arg.name
                                         )
                                     }

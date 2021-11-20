@@ -23,6 +23,12 @@ annotation class DefaultInt(
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.SOURCE)
+annotation class DefaultBool(
+    val defaultValue: Boolean
+)
+
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.SOURCE)
 annotation class DefaultString(
     val defaultValue: String
 )

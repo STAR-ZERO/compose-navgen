@@ -338,6 +338,109 @@ class NavGenProcessorTest {
     }
 
     @Test
+    fun hasBoolArgument() {
+        val navGenName = "test"
+        val methodName = "Test"
+        val argName = "data"
+
+        val source = SourceFile.kotlin(
+            "Test.kt",
+            """
+                package test
+                import com.star_zero.compose_nav_gen.NavGen
+
+                @NavGen("$navGenName")
+                fun $methodName($argName: Boolean) {
+                }
+            """.trimIndent()
+        )
+        val compilation = prepareCompilation(source)
+        val result = compilation.compile()
+
+        assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+
+        val generatedFiles =
+            compilation.kspSourcesDir.walkTopDown().filter { it.extension == "kt" }.toList()
+        assertThat(generatedFiles).hasSize(1)
+
+        val generatedSource = generatedFiles.first().readText()
+        assertThat(generatedSource).contains(
+            """
+                public fun NavGraphBuilder.$navGenName(): Unit {
+                  composable("$navGenName/{$argName}",
+                    arguments = listOf(
+                      navArgument("$argName") { type = NavType.BoolType },
+                    )
+                  ) { backStackEntry ->
+                    $methodName(
+                      backStackEntry.arguments!!.getBoolean("$argName"),
+                    )
+                  }
+                }
+                
+                public fun NavController.$navGenName(`$argName`: Boolean): Unit {
+                  navigate(${"\"\"\""}$navGenName/${"$"}$argName${"\"\"\""})
+                }
+
+                public val NavGenRoutes.$navGenName: String
+                  get() = "$navGenName/{$argName}"
+            """.trimIndent()
+        )
+    }
+
+    @Test
+    fun hasBoolDefaultArgument() {
+        val navGenName = "test"
+        val methodName = "Test"
+        val argName = "data"
+
+        val source = SourceFile.kotlin(
+            "Test.kt",
+            """
+                package test
+                import com.star_zero.compose_nav_gen.NavGen
+                import com.star_zero.compose_nav_gen.DefaultBool
+
+                @NavGen("$navGenName")
+                fun $methodName(@DefaultBool(true) $argName: Boolean) {
+                }
+            """.trimIndent()
+        )
+        val compilation = prepareCompilation(source)
+        val result = compilation.compile()
+
+        assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.OK)
+
+        val generatedFiles =
+            compilation.kspSourcesDir.walkTopDown().filter { it.extension == "kt" }.toList()
+        assertThat(generatedFiles).hasSize(1)
+
+        val generatedSource = generatedFiles.first().readText()
+        assertThat(generatedSource).contains(
+            """
+                public fun NavGraphBuilder.$navGenName(): Unit {
+                  composable("$navGenName?$argName={$argName}",
+                    arguments = listOf(
+                      navArgument("$argName") { type = NavType.BoolType; defaultValue = true },
+                    )
+                  ) { backStackEntry ->
+                    $methodName(
+                      backStackEntry.arguments!!.getBoolean("$argName"),
+                    )
+                  }
+                }
+                
+                public fun NavController.$navGenName(`$argName`: Boolean = true): Unit {
+                  navigate(${"\"\"\""}$navGenName?$argName=${"$"}$argName${"\"\"\""})
+                }
+
+                public val NavGenRoutes.$navGenName: String
+                  get() = "$navGenName?$argName={$argName}"
+            """.trimIndent()
+        )
+    }
+
+    @Test
     fun hasNavController() {
         val navGenName = "test"
         val methodName = "Test"
@@ -394,7 +497,9 @@ class NavGenProcessorTest {
         val argName3 = "data3"
         val argName4 = "data4"
         val argName5 = "data5"
-        val argName6 = "navController"
+        val argName6 = "data6"
+        val argName7 = "data7"
+        val argNavController = "navController"
 
         val source = SourceFile.kotlin(
             "Test.kt",
@@ -404,15 +509,18 @@ class NavGenProcessorTest {
                 import com.star_zero.compose_nav_gen.NavGen
                 import com.star_zero.compose_nav_gen.DefaultString
                 import com.star_zero.compose_nav_gen.DefaultInt
+                import com.star_zero.compose_nav_gen.DefaultBool
 
                 @NavGen("$navGenName")
                 fun $methodName(
                     $argName1: Int,
-                    $argName2: String,
-                    $argName3: String?,
-                    @DefaultString("abc") $argName4: String,
-                    @DefaultInt(123) $argName5: Int,
-                    $argName6: NavController) {
+                    $argName2: Boolean,
+                    $argName3: String,
+                    $argName4: String?,
+                    @DefaultString("abc") $argName5: String,
+                    @DefaultInt(123) $argName6: Int,
+                    @DefaultBool(true) $argName7: Boolean,
+                    $argNavController: NavController) {
                 }
             """.trimIndent()
         )
@@ -429,39 +537,45 @@ class NavGenProcessorTest {
 
         assertThat(generatedSource).contains(
             """
-                public fun NavGraphBuilder.$navGenName($argName6: NavController): Unit {
-                  composable("$navGenName/{$argName1}/{$argName2}?$argName3={$argName3}&$argName4={$argName4}&$argName5={$argName5}",
+                public fun NavGraphBuilder.$navGenName($argNavController: NavController): Unit {
+                  composable("$navGenName/{$argName1}/{$argName2}/{$argName3}?$argName4={$argName4}&$argName5={$argName5}&$argName6={$argName6}&$argName7={$argName7}",
                     arguments = listOf(
                       navArgument("$argName1") { type = NavType.IntType },
-                      navArgument("$argName2") { type = NavType.StringType },
-                      navArgument("$argName3") { type = NavType.StringType; nullable = true },
-                      navArgument("$argName4") { type = NavType.StringType; defaultValue = "abc" },
-                      navArgument("$argName5") { type = NavType.IntType; defaultValue = 123 },
+                      navArgument("$argName2") { type = NavType.BoolType },
+                      navArgument("$argName3") { type = NavType.StringType },
+                      navArgument("$argName4") { type = NavType.StringType; nullable = true },
+                      navArgument("$argName5") { type = NavType.StringType; defaultValue = "abc" },
+                      navArgument("$argName6") { type = NavType.IntType; defaultValue = 123 },
+                      navArgument("$argName7") { type = NavType.BoolType; defaultValue = true },
                     )
                   ) { backStackEntry ->
                     $methodName(
                       backStackEntry.arguments!!.getInt("$argName1"),
-                      backStackEntry.arguments!!.getString("$argName2")!!,
-                      backStackEntry.arguments?.getString("$argName3"),
-                      backStackEntry.arguments!!.getString("$argName4")!!,
-                      backStackEntry.arguments!!.getInt("$argName5"),
-                      $argName6,
+                      backStackEntry.arguments!!.getBoolean("$argName2"),
+                      backStackEntry.arguments!!.getString("$argName3")!!,
+                      backStackEntry.arguments?.getString("$argName4"),
+                      backStackEntry.arguments!!.getString("$argName5")!!,
+                      backStackEntry.arguments!!.getInt("$argName6"),
+                      backStackEntry.arguments!!.getBoolean("$argName7"),
+                      $argNavController,
                     )
                   }
                 }
                 
                 public fun NavController.$navGenName(
                   $argName1: Int,
-                  $argName2: String,
-                  $argName3: String? = null,
-                  $argName4: String = "abc",
-                  $argName5: Int = 123
+                  $argName2: Boolean,
+                  $argName3: String,
+                  $argName4: String? = null,
+                  $argName5: String = "abc",
+                  $argName6: Int = 123,
+                  $argName7: Boolean = true
                 ): Unit {
-                  navigate(${"\"\"\""}$navGenName/${"$"}$argName1/${"$"}$argName2?$argName3=${"$"}{$argName3 ?: ""}&$argName4=${"$"}$argName4&$argName5=${"$"}$argName5${"\"\"\""})
+                  navigate(${"\"\"\""}$navGenName/${"$"}$argName1/${"$"}$argName2/${"$"}$argName3?$argName4=${"$"}{$argName4 ?: ""}&$argName5=${"$"}$argName5&$argName6=${"$"}$argName6&$argName7=${"$"}$argName7${"\"\"\""})
                 }
                 
                 public val NavGenRoutes.$navGenName: String
-                  get() = "$navGenName/{$argName1}/{$argName2}?$argName3={$argName3}&$argName4={$argName4}&$argName5={$argName5}"
+                  get() = "$navGenName/{$argName1}/{$argName2}/{$argName3}?$argName4={$argName4}&$argName5={$argName5}&$argName6={$argName6}&$argName7={$argName7}"
             """.trimIndent()
         )
     }
@@ -512,6 +626,30 @@ class NavGenProcessorTest {
 
         assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
         assertThat(result.messages).contains("Int argument does not allow nullable")
+    }
+
+    @Test
+    fun notAllowBoolNullable() {
+        val navGenName = "test"
+        val methodName = "Test"
+        val argName = "data"
+
+        val source = SourceFile.kotlin(
+            "Test.kt",
+            """
+                package test
+                import com.star_zero.compose_nav_gen.NavGen
+
+                @NavGen("$navGenName")
+                fun $methodName($argName: Boolean?) {
+                }
+            """.trimIndent()
+        )
+        val compilation = prepareCompilation(source)
+        val result = compilation.compile()
+
+        assertThat(result.exitCode).isEqualTo(KotlinCompilation.ExitCode.COMPILATION_ERROR)
+        assertThat(result.messages).contains("Boolean argument does not allow nullable")
     }
 
     private fun prepareCompilation(source: SourceFile): KotlinCompilation {

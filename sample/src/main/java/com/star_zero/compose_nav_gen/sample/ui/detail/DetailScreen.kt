@@ -15,10 +15,13 @@
  */
 package com.star_zero.compose_nav_gen.sample.ui.detail
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import com.star_zero.compose_nav_gen.DefaultString
@@ -29,6 +32,7 @@ import com.star_zero.compose_nav_gen.NavGen
 fun DetailScreen(
     lang: String,
     ja: String?,
+    like: Boolean,
     @DefaultString("yes") defaultTest: String,
     navController: NavController
 ) {
@@ -41,6 +45,13 @@ fun DetailScreen(
             text = "$lang ($ja)",
             style = MaterialTheme.typography.h3
         )
+
+        if (like) {
+            Image(
+                imageVector = Icons.Filled.ThumbUp,
+                contentDescription = null
+            )
+        }
 
         Text(
             text = "Use default? => $defaultTest",
