@@ -1,9 +1,14 @@
 Compose NavGen
 ===
 
+## :construction: No longer maintained :construction: 
+
+[compose-destinations](https://github.com/raamcosta/compose-destinations) is my recommended library.
+
+---
+
 Generate helper methods for [compose navigation](https://developer.android.com/jetpack/compose/navigation) using [KSP](https://github.com/google/ksp).
 
-:construction: You can try it now, but it's still under development. :construction:
 
 ## TODO
 
